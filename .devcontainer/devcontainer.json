@@ -1,0 +1,14 @@
+{
+  "name": "Stellar Soroban Dev",
+  "image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y libdbus-1-3 libssl3 git-lfs && git lfs install || true && rustup target add wasm32v1-none || true && curl -fsSL https://github.com/stellar/stellar-cli/raw/main/install.sh | sh || true"
+
+,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  }
+}
