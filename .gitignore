@@ -1,0 +1,13 @@
+# Rust
+target/
+**/target/
+Cargo.lock
+
+# Soroban build artifacts
+contracts/target/
+
+# Node (if you use frontend later)
+node_modules/
+
+# Devcontainer
+.devcontainer/

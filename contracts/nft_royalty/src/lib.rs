@@ -5,6 +5,8 @@ use soroban_sdk::{
     Address, Env
 };
 
+use soroban_sdk::token::Client as TokenClient;
+
 #[derive(Clone)]
 #[contracttype]
 pub struct NFT {
@@ -19,7 +21,6 @@ pub struct NftRoyaltyContract;
 #[contractimpl]
 impl NftRoyaltyContract {
 
-    // Mint a new NFT
     pub fn mint(
         env: Env,
         token_id: u32,
@@ -37,11 +38,12 @@ impl NftRoyaltyContract {
         env.storage().instance().set(&token_id, &nft);
     }
 
-    // Simple transfer (no payment logic yet)
-    pub fn transfer(
+    pub fn transfer_with_payment(
         env: Env,
         token_id: u32,
-        new_owner: Address,
+        buyer: Address,
+        token: Address,
+        sale_price: i128,
     ) {
         let mut nft: NFT = env
             .storage()
@@ -49,9 +51,36 @@ impl NftRoyaltyContract {
             .get(&token_id)
             .expect("NFT not found");
 
+        // Seller must authorize
         nft.owner.require_auth();
 
-        nft.owner = new_owner;
+        let seller = nft.owner.clone();
+        let creator = nft.creator.clone();
+
+        // Royalty calculation (basis points)
+        let royalty = sale_price * (nft.royalty_bps as i128) / 10_000;
+        let seller_amount = sale_price - royalty;
+
+        let token_client = TokenClient::new(&env, &token);
+
+        let contract_address = env.current_contract_address();
+
+        token_client.transfer_from(
+            &contract_address, // spender (the NFT contract itself)
+            &buyer,            // from
+            &creator,          // to
+            &royalty,
+        );
+
+        token_client.transfer_from(
+            &contract_address,
+            &buyer,
+            &seller,
+            &seller_amount,
+        );
+
+        // Update ownership
+        nft.owner = buyer;
 
         env.storage().instance().set(&token_id, &nft);
     }
